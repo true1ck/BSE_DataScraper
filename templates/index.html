@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BSE Company Updates</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #f4f4f4;
+        }
+        h1 {
+            text-align: center;
+        }
+        .notification {
+            color: green;
+            font-weight: bold;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            margin: 0 auto;
+            background-color: #fff;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #4CAF50;
+            color: white;
+        }
+        tr:hover {
+            background-color: #f1f1f1;
+        }
+        a {
+            color: #007BFF;
+            text-decoration: none;
+        }
+        a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <h1>BSE Company Updates</h1>
+    <div class="notification" id="notification"></div>
+    <div id="company-table">
+        {{ tables|safe }}
+    </div>
+
+    <script>
+        function fetchUpdates() {
+            fetch('/updates')
+                .then(response => response.json())
+                .then(data => {
+                    const notification = document.getElementById('notification');
+                    const companyTable = document.getElementById('company-table');
+                    
+                    if (data.new_companies.length > 0) {
+                        notification.innerHTML = 'New companies added: ' + data.new_companies.join(', ');
+                    } else {
+                        notification.innerHTML = '';
+                    }
+
+                    // Update the company table with new updates
+                    const newTableRows = data.data.map(item => `
+                        <tr>
+                            <td>${item.SLONGNAME}</td>
+                            <td>${item.NEWSSUB}</td>
+                            <td>${item.NEWS_DT}</td>
+                            <td><a href="${item.NURL}" target="_blank">View Details</a></td>
+                        </tr>
+                    `).join('');
+
+                    companyTable.innerHTML = `<table>
+                        <thead>
+                            <tr>
+                                <th>Company Name</th>
+                                <th>Announcement</th>
+                                <th>Date</th>
+                                <th>URL</th>
+                            </tr>
+                        </thead>
+                        <tbody>${newTableRows || '<tr><td colspan="4">No updates available</td></tr>'}</tbody>
+                    </table>`;
+                })
+                .catch(error => console.error('Error fetching updates:', error));
+        }
+
+        // Fetch updates every 30 seconds
+        setInterval(fetchUpdates, 30000);
+    </script>
+</body>
+</html>
