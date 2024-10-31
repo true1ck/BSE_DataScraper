@@ -3,12 +3,23 @@ import requests
 import pandas as pd
 from flask import Flask, render_template, jsonify
 import json
-from datetime import datetime
+from datetime import datetime, timedelta
 
 app = Flask(__name__)
 
 # File to store previous company names
 PREVIOUS_COMPANIES_FILE = 'previous_companies.json'
+SCRIPS_FILE = 'ListOfScrips10_31_2024.csv'  # Path to your CSV file
+
+# Load Scrips data into a DataFrame
+def load_scrips_data():
+    """Load Scrips data from a CSV file."""
+    if os.path.exists(SCRIPS_FILE):
+        return pd.read_csv(SCRIPS_FILE)
+    return pd.DataFrame(columns=['Scrip Code', 'Scrip ID', 'Scrip Name', 'Status', 'Group', 'Face Value', 'ISIN No', 'Industry'])
+
+# Load the Scrip data into a global variable
+scrips_df = load_scrips_data()
 
 def load_previous_companies():
     """Load previous company data from a JSON file."""
@@ -33,13 +44,16 @@ def fetch_company_updates():
         "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36"
     }
 
+    yesterday = (datetime.now() - timedelta(days=1)).strftime('%Y%m%d')
+    today = datetime.now().strftime('%Y%m%d')
+
     params = {
         "pageno": "1",
         "strCat": "Company Update",
-        "strPrevDate": "20241030",
+        "strPrevDate": yesterday,  # Set to yesterday's date
         "strScrip": "",
         "strSearch": "P",
-        "strToDate": "20241030",
+        "strToDate": today,  # Set to today's date
         "strType": "C",
         "subcategory": "Award of Order / Receipt of Order"
     }
@@ -50,6 +64,13 @@ def fetch_company_updates():
         return response.json()['Table']
     else:
         return []
+
+def get_scrip_id(scrip_code):
+    """Get Scrip ID based on Scrip Code."""
+    result = scrips_df[scrips_df['Scrip Code'] == scrip_code]
+    if not result.empty:
+        return result['Scrip ID'].values[0]
+    return None
 
 @app.route('/')
 def home():
@@ -73,12 +94,17 @@ def home():
 
 @app.route('/updates')
 def updates():
-    """Return updated company data as JSON."""
+    """Return updated company data as JSON with Scrip ID."""
     data = fetch_company_updates()
     current_companies = {item['SLONGNAME'] for item in data if item['SLONGNAME']}
     previous_companies = load_previous_companies()
 
     new_companies = current_companies - previous_companies
+
+    # Add Scrip IDs to the data
+    for item in data:
+        scrip_code = item['SCRIP_CD']  # Ensure you have this field in your data
+        item['Scrip_ID'] = get_scrip_id(scrip_code)
 
     # Save current companies
     save_current_companies(current_companies)
