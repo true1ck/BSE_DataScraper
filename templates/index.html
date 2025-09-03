@@ -7,53 +7,59 @@
     <style>
         body {
             font-family: Arial, sans-serif;
-            margin: 10px;
+            margin: 0;
             background-color: #f8f9fa;
+        }
+        .container {
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 1.5em 1em;
         }
         h1 {
             text-align: center;
             color: #333;
-            font-size: 1.8em;
-            margin-bottom: 15px;
+            font-size: 2.2rem;
+            margin-bottom: 1.2em;
         }
         .refresh-countdown {
             text-align: center;
             background-color: #e3f2fd;
             color: #1976d2;
-            padding: 8px;
-            margin: 10px auto;
+            padding: 0.7em 1em;
+            margin: 1em auto 1.5em auto;
             border-radius: 6px;
             font-weight: bold;
-            font-size: 1em;
-            max-width: 280px;
+            font-size: 1.1rem;
+            max-width: 350px;
             border: 2px solid #2196f3;
         }
         .notification-controls {
             display: flex;
             flex-wrap: wrap;
             justify-content: center;
-            gap: 10px;
-            margin: 15px auto;
-            max-width: 400px;
+            gap: 0.7em;
+            margin: 1em auto 1.5em auto;
+            max-width: 500px;
         }
         .notification-controls button {
             background-color: #4CAF50;
             color: white;
             border: none;
-            padding: 8px 15px;
+            padding: 0.7em 1.5em;
             border-radius: 5px;
             cursor: pointer;
-            font-size: 0.9em;
+            font-size: 1rem;
             font-weight: bold;
             flex-grow: 1;
-            min-width: 150px;
+            min-width: 140px;
+            transition: background 0.2s;
         }
-        .notification-controls button:hover {
+        .notification-controls button:hover, .notification-controls button:focus {
             background-color: #45a049;
         }
         #notification-status {
-            margin-top: 10px;
-            font-size: 0.9em;
+            margin-top: 0.7em;
+            font-size: 0.97em;
             color: #666;
             width: 100%;
             text-align: center;
@@ -62,28 +68,36 @@
             color: green;
             font-weight: bold;
             text-align: center;
-            margin-bottom: 10px;
-            font-size: 0.95em;
+            margin-bottom: 1em;
+            font-size: 1.05em;
         }
         #company-table {
             overflow-x: auto;
-            margin-top: 20px;
+            margin-top: 1.5em;
+            position: relative;
+        }
+        .scroll-hint {
+            display: none;
+            font-size: 0.95em;
+            color: #888;
+            text-align: center;
+            margin-bottom: 0.5em;
         }
         table {
             border-collapse: collapse;
             width: 100%;
-            min-width: 600px; /* Ensure table is readable on smaller screens */
+            min-width: 600px;
             margin: 0 auto;
             background-color: #fff;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
             border-radius: 6px;
             overflow: hidden;
         }
         th, td {
             border: 1px solid #ddd;
-            padding: 8px 6px;
+            padding: 0.7em 0.5em;
             text-align: left;
-            font-size: 0.85em;
+            font-size: 1em;
         }
         th {
             background-color: #007BFF;
@@ -106,25 +120,59 @@
         a:hover {
             text-decoration: underline;
         }
-        @media (max-width: 768px) {
-            body {
-                margin: 10px;
+        /* Tablet breakpoint */
+        @media (max-width: 1024px) {
+            .container {
+                padding: 1em 0.5em;
             }
             h1 {
-                font-size: 1.5em;
+                font-size: 1.7rem;
             }
             .refresh-countdown {
-                font-size: 0.9em;
-                padding: 6px;
+                font-size: 1em;
                 max-width: 250px;
             }
+        }
+        /* Mobile landscape and small tablets */
+        @media (max-width: 900px) {
+            table {
+                min-width: 480px;
+            }
+            th, td {
+                font-size: 0.97em;
+            }
+            .scroll-hint {
+                display: block;
+            }
+            #company-table::after {
+                content: "";
+                position: absolute;
+                right: 0;
+                top: 0;
+                width: 30px;
+                height: 100%;
+                pointer-events: none;
+                background: linear-gradient(to left, #f8f9fa 60%, rgba(248,249,250,0));
+                z-index: 2;
+            }
+        }
+        /* Mobile portrait */
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 1.3rem;
+            }
+            .refresh-countdown {
+                font-size: 0.95em;
+                padding: 0.5em;
+                max-width: 200px;
+            }
             .notification-controls button {
-                font-size: 0.8em;
-                padding: 6px 10px;
-                min-width: 120px;
+                font-size: 0.9em;
+                padding: 0.5em 0.7em;
+                min-width: 100px;
             }
             .notification {
-                font-size: 0.9em;
+                font-size: 0.95em;
             }
             table, thead, tbody, th, td, tr {
                 display: block;
@@ -146,6 +194,7 @@
                 position: relative;
                 padding-left: 45%;
                 text-align: right;
+                font-size: 0.97em;
             }
             td:last-child {
                 border-bottom: none;
@@ -160,42 +209,49 @@
                 font-weight: bold;
                 color: #555;
             }
-            /* Assign data-label to each cell */
             td:nth-of-type(1):before { content: "Company Name:"; }
             td:nth-of-type(2):before { content: "Announcement:"; }
             td:nth-of-type(3):before { content: "Date:"; }
             td:nth-of-type(4):before { content: "URL:"; }
         }
-
+        /* Very small devices */
         @media (max-width: 480px) {
+            .container {
+                padding: 0.5em 0.2em;
+            }
             .notification-controls {
                 flex-direction: column;
                 align-items: center;
             }
             .notification-controls button {
-                width: 90%;
-                max-width: 200px;
+                width: 95%;
+                max-width: 220px;
             }
             #notification-status {
-                font-size: 0.8em;
+                font-size: 0.85em;
+            }
+            th, td {
+                font-size: 0.93em;
             }
         }
     </style>
 </head>
 <body>
-    <h1>BSE Company Updates</h1>
-    <div class="refresh-countdown" id="refresh-countdown">Refreshing in 30s</div>
-    <div class="notification-controls">
-        <button id="notification-btn" onclick="requestNotificationPermission()">
-            🔔 Enable Notifications
-        </button>
-        <div id="notification-status"></div>
+    <div class="container">
+        <h1>BSE Company Updates</h1>
+        <div class="refresh-countdown" id="refresh-countdown">Refreshing in 30s</div>
+        <div class="notification-controls">
+            <button id="notification-btn" onclick="requestNotificationPermission()">
+                🔔 Enable Notifications
+            </button>
+            <div id="notification-status"></div>
+        </div>
+        <div class="notification" id="notification"></div>
+        <div class="scroll-hint">Swipe left/right to see all columns</div>
+        <div id="company-table">
+            {{ tables|safe }}
+        </div>
     </div>
-    <div class="notification" id="notification"></div>
-    <div id="company-table">
-        {{ tables|safe }}
-    </div>
-
     <script>
         let countdown = 30;
         let refreshInterval;
