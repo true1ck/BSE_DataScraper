@@ -7,27 +7,32 @@
     <style>
         body {
             font-family: Arial, sans-serif;
-            margin: 20px;
+            margin: 10px;
             background-color: #f8f9fa;
         }
         h1 {
             text-align: center;
             color: #333;
+            font-size: 1.8em;
+            margin-bottom: 15px;
         }
         .refresh-countdown {
             text-align: center;
             background-color: #e3f2fd;
             color: #1976d2;
-            padding: 10px;
-            margin: 15px auto;
+            padding: 8px;
+            margin: 10px auto;
             border-radius: 6px;
             font-weight: bold;
-            font-size: 16px;
-            max-width: 300px;
+            font-size: 1em;
+            max-width: 280px;
             border: 2px solid #2196f3;
         }
         .notification-controls {
-            text-align: center;
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 10px;
             margin: 15px auto;
             max-width: 400px;
         }
@@ -35,29 +40,39 @@
             background-color: #4CAF50;
             color: white;
             border: none;
-            padding: 10px 20px;
+            padding: 8px 15px;
             border-radius: 5px;
             cursor: pointer;
-            font-size: 14px;
+            font-size: 0.9em;
             font-weight: bold;
+            flex-grow: 1;
+            min-width: 150px;
         }
         .notification-controls button:hover {
             background-color: #45a049;
         }
         #notification-status {
             margin-top: 10px;
-            font-size: 14px;
+            font-size: 0.9em;
             color: #666;
+            width: 100%;
+            text-align: center;
         }
         .notification {
             color: green;
             font-weight: bold;
             text-align: center;
-            margin-bottom: 15px;
+            margin-bottom: 10px;
+            font-size: 0.95em;
+        }
+        #company-table {
+            overflow-x: auto;
+            margin-top: 20px;
         }
         table {
             border-collapse: collapse;
             width: 100%;
+            min-width: 600px; /* Ensure table is readable on smaller screens */
             margin: 0 auto;
             background-color: #fff;
             box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
@@ -66,8 +81,9 @@
         }
         th, td {
             border: 1px solid #ddd;
-            padding: 10px 8px;
+            padding: 8px 6px;
             text-align: left;
+            font-size: 0.85em;
         }
         th {
             background-color: #007BFF;
@@ -91,24 +107,77 @@
             text-decoration: underline;
         }
         @media (max-width: 768px) {
+            body {
+                margin: 10px;
+            }
+            h1 {
+                font-size: 1.5em;
+            }
+            .refresh-countdown {
+                font-size: 0.9em;
+                padding: 6px;
+                max-width: 250px;
+            }
+            .notification-controls button {
+                font-size: 0.8em;
+                padding: 6px 10px;
+                min-width: 120px;
+            }
+            .notification {
+                font-size: 0.9em;
+            }
             table, thead, tbody, th, td, tr {
                 display: block;
             }
-            th {
-                position: relative;
+            thead tr {
+                position: absolute;
+                top: -9999px;
+                left: -9999px;
+            }
+            tr {
+                border: 1px solid #ddd;
+                margin-bottom: 10px;
+                border-radius: 5px;
+                overflow: hidden;
             }
             td {
-                padding-left: 50%;
-                position: relative;
                 border: none;
-                border-bottom: 1px solid #ddd;
+                border-bottom: 1px solid #eee;
+                position: relative;
+                padding-left: 45%;
+                text-align: right;
+            }
+            td:last-child {
+                border-bottom: none;
             }
             td:before {
-                content: attr(data-label);
                 position: absolute;
                 left: 10px;
+                width: 40%;
+                padding-right: 10px;
+                white-space: nowrap;
+                text-align: left;
                 font-weight: bold;
                 color: #555;
+            }
+            /* Assign data-label to each cell */
+            td:nth-of-type(1):before { content: "Company Name:"; }
+            td:nth-of-type(2):before { content: "Announcement:"; }
+            td:nth-of-type(3):before { content: "Date:"; }
+            td:nth-of-type(4):before { content: "URL:"; }
+        }
+
+        @media (max-width: 480px) {
+            .notification-controls {
+                flex-direction: column;
+                align-items: center;
+            }
+            .notification-controls button {
+                width: 90%;
+                max-width: 200px;
+            }
+            #notification-status {
+                font-size: 0.8em;
             }
         }
     </style>
