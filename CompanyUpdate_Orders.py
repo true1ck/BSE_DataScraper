@@ -23,40 +23,59 @@ def save_current_companies(companies):
         json.dump(list(companies), f)
 
 def fetch_company_updates():
-    """Fetch company updates from BSE API."""
+    """Fetch company updates from BSE API with pagination."""
+    today = datetime.now().strftime('%Y%m%d')
+    
     headers = {
         "accept": "application/json, text/plain, */*",
         "accept-language": "en-US,en;q=0.9",
-        "dnt": "1",
         "origin": "https://www.bseindia.com",
         "referer": "https://www.bseindia.com/",
         "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36"
     }
 
-    params = {
-        "pageno": "1",
-        "strCat": "Company Update",
-        "strPrevDate": "20241030",
-        "strScrip": "",
-        "strSearch": "P",
-        "strToDate": "20241030",
-        "strType": "C",
-        "subcategory": "Award of Order / Receipt of Order"
-    }
+    all_data = []
+    page = 1
 
-    response = requests.get("https://api.bseindia.com/BseIndiaAPI/api/AnnSubCategoryGetData/w", headers=headers, params=params)
+    while True:
+        params = {
+            "pageno": str(page),
+            "strCat": "Company Update",
+            "strPrevDate": today,
+            "strScrip": "",
+            "strSearch": "P",
+            "strToDate": today,
+            "strType": "C",
+            "subcategory": "Award of Order / Receipt of Order"
+        }
 
-    if response.status_code == 200:
-        return response.json()['Table']
-    else:
-        return []
+        response = requests.get(
+            "https://api.bseindia.com/BseIndiaAPI/api/AnnSubCategoryGetData/w",
+            headers=headers,
+            params=params
+        )
+
+        if response.status_code != 200:
+            break
+
+        json_data = response.json().get("Table", [])
+        if not json_data:
+            break
+
+        all_data.extend(json_data)
+        page += 1
+
+    return all_data
 
 @app.route('/')
 def home():
     """Render the main page with the initial data."""
     data = fetch_company_updates()
-    current_companies = {item['SLONGNAME'] for item in data if item['SLONGNAME']}
+    current_companies = {item['SLONGNAME'] for item in data if item.get('SLONGNAME')}
     save_current_companies(current_companies)
+
+    if not data:
+        return render_template('index.html', tables="<p>No updates found today.</p>")
 
     # Create a DataFrame and format the table
     df = pd.DataFrame(data)[['SLONGNAME', 'NEWSSUB', 'NEWS_DT', 'NSURL']]
@@ -75,7 +94,7 @@ def home():
 def updates():
     """Return updated company data as JSON."""
     data = fetch_company_updates()
-    current_companies = {item['SLONGNAME'] for item in data if item['SLONGNAME']}
+    current_companies = {item['SLONGNAME'] for item in data if item.get('SLONGNAME')}
     previous_companies = load_previous_companies()
 
     new_companies = current_companies - previous_companies
