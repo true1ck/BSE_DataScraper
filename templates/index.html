@@ -8,53 +8,192 @@
         body {
             font-family: Arial, sans-serif;
             margin: 20px;
-            background-color: #f4f4f4;
+            background-color: #f8f9fa;
         }
         h1 {
             text-align: center;
+            color: #333;
+        }
+        .refresh-countdown {
+            text-align: center;
+            background-color: #e3f2fd;
+            color: #1976d2;
+            padding: 10px;
+            margin: 15px auto;
+            border-radius: 6px;
+            font-weight: bold;
+            font-size: 16px;
+            max-width: 300px;
+            border: 2px solid #2196f3;
+        }
+        .notification-controls {
+            text-align: center;
+            margin: 15px auto;
+            max-width: 400px;
+        }
+        .notification-controls button {
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: bold;
+        }
+        .notification-controls button:hover {
+            background-color: #45a049;
+        }
+        #notification-status {
+            margin-top: 10px;
+            font-size: 14px;
+            color: #666;
         }
         .notification {
             color: green;
             font-weight: bold;
             text-align: center;
-            margin-bottom: 20px;
+            margin-bottom: 15px;
         }
         table {
             border-collapse: collapse;
             width: 100%;
             margin: 0 auto;
             background-color: #fff;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            border-radius: 6px;
+            overflow: hidden;
         }
         th, td {
             border: 1px solid #ddd;
-            padding: 8px;
+            padding: 10px 8px;
             text-align: left;
         }
         th {
-            background-color: #4CAF50;
+            background-color: #007BFF;
             color: white;
+            position: sticky;
+            top: 0;
+            z-index: 1;
+        }
+        tr:nth-child(even) {
+            background-color: #f9f9f9;
         }
         tr:hover {
-            background-color: #f1f1f1;
+            background-color: #eef6ff;
         }
         a {
             color: #007BFF;
             text-decoration: none;
+            font-weight: bold;
         }
         a:hover {
             text-decoration: underline;
+        }
+        @media (max-width: 768px) {
+            table, thead, tbody, th, td, tr {
+                display: block;
+            }
+            th {
+                position: relative;
+            }
+            td {
+                padding-left: 50%;
+                position: relative;
+                border: none;
+                border-bottom: 1px solid #ddd;
+            }
+            td:before {
+                content: attr(data-label);
+                position: absolute;
+                left: 10px;
+                font-weight: bold;
+                color: #555;
+            }
         }
     </style>
 </head>
 <body>
     <h1>BSE Company Updates</h1>
+    <div class="refresh-countdown" id="refresh-countdown">Refreshing in 30s</div>
+    <div class="notification-controls">
+        <button id="notification-btn" onclick="requestNotificationPermission()">
+            🔔 Enable Notifications
+        </button>
+        <div id="notification-status"></div>
+    </div>
     <div class="notification" id="notification"></div>
     <div id="company-table">
         {{ tables|safe }}
     </div>
 
     <script>
+        let countdown = 30;
+        let refreshInterval;
+
+        // Request notification permission on page load
+        function requestNotificationPermission() {
+            if ('Notification' in window) {
+                Notification.requestPermission().then(permission => {
+                    if (permission === 'granted') {
+                        console.log('Notification permission granted');
+                        document.getElementById('notification-status').innerHTML = '✅ Notifications enabled';
+                    } else {
+                        console.log('Notification permission denied');
+                        document.getElementById('notification-status').innerHTML = '❌ Notifications disabled';
+                    }
+                });
+            }
+        }
+
+        // Show browser notification for new stocks
+        function showStockNotification(newCompanies) {
+            if ('Notification' in window && Notification.permission === 'granted') {
+                const notification = new Notification('New BSE Stocks Added!', {
+                    body: `New companies: ${newCompanies.join(', ')}`,
+                    icon: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDgiIGhlaWdodD0iNDgiIHZpZXdCb3g9IjAgMCA0OCA0OCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZD0iTTI0IDRDMTIuOTUgNCA0IDEyLjk1IDQgMjRDMCAzNi4wNSAxMS45NSA0OCAyNCA0OEMzNi4wNSA0OCA0OCAzNi4wNSA0OCAyNEM0OCAxMS45NSA0OCA0IDI0IDRaIiBmaWxsPSIjMjE5NkYzIi8+CjxwYXRoIGQ9Ik0yNCAyNkMyOC40MTQgMjYgMzIgMjIuNDE0IDMyIDE4QzMyIDEzLjU4NiAyOC40MTQgMTAgMjQgMTBDMTkuNTg2IDEwIDE2IDEzLjU4NiAxNiAxOEMxNiAyMi40MTQgMTkuNTg2IDI2IDI0IDI2WiIgZmlsbD0id2hpdGUiLz4KPHBhdGggZD0iTTI0IDM0QzE5LjU4NiAzNCAxNiAzNy41ODYgMTYgNDJIMzJDMzIgMzcuNTg2IDI4LjQxNCAzNCAyNCAzNFoiIGZpbGw9IndoaXRlIi8+Cjwvc3ZnPgo=',
+                    badge: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDgiIGhlaWdodD0iNDgiIHZpZXdCb3g9IjAgMCA0OCA0OCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZD0iTTI0IDRDMTIuOTUgNCA0IDEyLjk1IDQgMjRDMCAzNi4wNSAxMS45NSA0OCAyNCA0OEMzNi4wNSA0OCA0OCAzNi4wNSA0OCAyNEM0OCAxMS45NSA0OCA0IDI0IDRaIiBmaWxsPSIjRkY2QjM2Ii8+CjxwYXRoIGQ9Ik0yNCAyNkMyOC40MTQgMjYgMzIgMjIuNDE0IDMyIDE4QzMyIDEzLjU4NiAyOC40MTQgMTAgMjQgMTBDMTkuNTg2IDEwIDE2IDEzLjU4NiAxNiAxOEMxNiAyMi40MTQgMTkuNTg2IDI2IDI0IDI2WiIgZmlsbD0id2hpdGUiLz4KPHBhdGggZD0iTTI0IDM0QzE5LjU4NiAzNCAxNiAzNy41ODYgMTYgNDJIMzJDMzIgMzcuNTg2IDI4LjQxNCAzNCAyNCAzNFoiIGZpbGw9IndoaXRlIi8+Cjwvc3ZnPgo=',
+                    tag: 'bse-stock-update',
+                    requireInteraction: false,
+                    silent: false
+                });
+
+                // Auto-close notification after 5 seconds
+                setTimeout(() => {
+                    notification.close();
+                }, 5000);
+            }
+        }
+
+        function updateCountdown() {
+            const countdownElement = document.getElementById('refresh-countdown');
+            countdownElement.innerHTML = `Next refresh in: <span id="countdown-timer">${countdown}</span> seconds`;
+        }
+
+        function startSynchronizedRefresh() {
+            // Clear any existing interval
+            if (refreshInterval) {
+                clearInterval(refreshInterval);
+            }
+            
+            // Reset countdown to 30
+            countdown = 30;
+            updateCountdown();
+            
+            // Create a single interval that handles both countdown and refresh
+            refreshInterval = setInterval(() => {
+                countdown--;
+                updateCountdown();
+                
+                // When countdown reaches 0, refresh and reset
+                if (countdown <= 0) {
+                    fetchUpdates();
+                    countdown = 30;
+                    updateCountdown();
+                }
+            }, 1000);
+        }
+
         function fetchUpdates() {
             fetch('/updates')
                 .then(response => response.json())
@@ -63,18 +202,23 @@
                     const companyTable = document.getElementById('company-table');
                     
                     if (data.new_companies.length > 0) {
-                        notification.innerHTML = 'New companies added: ' + data.new_companies.join(', ');
+                        const now = new Date().toLocaleTimeString();
+                        notification.innerHTML = 
+                            `🔔 New companies added (${now}): ${data.new_companies.join(', ')}`;
+                        
+                        // Show browser notification for new stocks
+                        showStockNotification(data.new_companies);
                     } else {
                         notification.innerHTML = '';
                     }
 
-                    // Update the company table with new updates
+                    // Update table
                     const newTableRows = data.data.map(item => `
                         <tr>
-                            <td>${item.SLONGNAME}</td>
-                            <td>${item.NEWSSUB}</td>
-                            <td>${item.NEWS_DT}</td>
-                            <td><a href="${item.NURL}" target="_blank">View Details</a></td>
+                            <td data-label="Company Name">${item.SLONGNAME}</td>
+                            <td data-label="Announcement">${item.NEWSSUB}</td>
+                            <td data-label="Date">${item.NEWS_DT}</td>
+                            <td data-label="URL"><a href="${item.NURL || item.NURL}" target="_blank">View</a></td>
                         </tr>
                     `).join('');
 
@@ -85,16 +229,22 @@
                                 <th>Announcement</th>
                                 <th>Date</th>
                                 <th>URL</th>
-                            </tr>
+                                </tr>
                         </thead>
                         <tbody>${newTableRows || '<tr><td colspan="4">No updates available</td></tr>'}</tbody>
                     </table>`;
                 })
-                .catch(error => console.error('Error fetching updates:', error));
+                .catch(error => {
+                    console.error('Error fetching updates:', error);
+                    // Even on error, keep the countdown running
+                });
         }
 
-        // Fetch updates every 30 seconds
-        setInterval(fetchUpdates, 30000);
+        // Start the synchronized countdown and refresh system
+        startSynchronizedRefresh();
+
+        // Request notification permission when page loads
+        requestNotificationPermission();
     </script>
 </body>
 </html>
