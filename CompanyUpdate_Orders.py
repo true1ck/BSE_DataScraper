@@ -7,8 +7,8 @@ from datetime import datetime, timedelta
 
 app = Flask(__name__)
 
-# File to store previously seen companies
-PREVIOUS_COMPANIES_FILE = 'previous_companies.json'
+# File to store previously seen companies (use a temporary directory for Vercel)
+PREVIOUS_COMPANIES_FILE = os.path.join('/tmp', 'previous_companies.json')
 
 
 def load_previous_companies():
@@ -114,7 +114,3 @@ def updates():
         'new_companies': list(new_companies),
         'data': data
     })
-
-
-if __name__ == '__main__':
-    app.run(debug=True)
